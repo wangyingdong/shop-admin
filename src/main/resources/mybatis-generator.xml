@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+
+    <context id="mysql" targetRuntime="MyBatis3Simple" defaultModelType="flat">
+        <property name="javaFileEncoding" value="UTF-8"/>
+        <property name="useMapperCommentGenerator" value="true"/>
+
+        <plugin type="com.softwareloop.mybatis.generator.plugins.LombokPlugin">
+
+            <!-- enable annotations -->
+            <property name="builder" value="true"/>
+            <!-- enable annotations -->
+            <property name="data" value="true"/>
+            <!-- enable annotations -->
+            <property name="NnoArgsConstructor" value="true"/>
+            <!-- disable annotations -->
+            <property name="allArgsConstructor" value="true"/>
+        </plugin>
+
+        <plugin type="tk.mybatis.mapper.generator.MapperPlugin">
+            <property name="mappers" value="com.f139.shop.admin.common.mapper.BasicMapper"/>
+            <property name="forceAnnotation" value="true"/>
+            <property name="caseSensitive" value="true"/>
+        </plugin>
+
+        <jdbcConnection driverClass="com.mysql.jdbc.Driver"
+                        connectionURL="jdbc:mysql://127.0.0.1/shop?serverTimezone=UTC"
+                        userId="root"
+                        password="123456">
+        </jdbcConnection>
+
+        <!--MyBatis 生成器只需要生成 Model-->
+        <javaModelGenerator targetPackage="com.f139.shop.admin.entity"
+                            targetProject="src/main/java"/>
+        <sqlMapGenerator targetPackage="com.f139.shop.admin.mapper"
+                         targetProject="src/main/resources"/>
+
+        <javaClientGenerator targetPackage="com.f139.shop.admin.mapper"
+                             targetProject="src/main/java"
+                             type="XMLMAPPER"
+        />
+
+
+<!--        <table tableName="user_info" domainObjectName="UserInfo"  enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">-->
+<!--            <generatedKey column="id" sqlStatement="JDBC"/>-->
+<!--            <columnOverride column="username"/>-->
+<!--            <columnOverride column="password"/>-->
+<!--        </table>-->
+
+        <table tableName="orders_logistic" domainObjectName="OrdersLogistic"  enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">
+           <generatedKey column="id" sqlStatement="JDBC"/>
+<!--            <generatedKey column="module_id" sqlStatement="JDBC"/>-->
+<!--            <columnOverride column="role_id"/>-->
+<!--            <columnOverride column="module_id"/>-->
+
+        </table>
+    </context>
+</generatorConfiguration>

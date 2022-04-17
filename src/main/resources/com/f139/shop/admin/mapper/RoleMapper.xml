@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.f139.shop.admin.mapper.RoleMapper">
+  <resultMap id="BaseResultMap" type="com.f139.shop.admin.entity.Role">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="role_name" jdbcType="VARCHAR" property="roleName" />
+    <result column="role_remark" jdbcType="VARCHAR" property="roleRemark" />
+    <result column="state" jdbcType="BIT" property="state" />
+  </resultMap>
+</mapper>
