@@ -55,6 +55,9 @@ public class UserInfo {
     @Transient //不存在的字段
     private List<ViewUserRole> userRoleList;
 
+    @Transient
+    private String token;
+
     //保存的时候校验分组
     public interface Save {
     }

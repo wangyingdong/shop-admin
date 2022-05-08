@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-public class GoodService implements IGoodService {
+public class GoodServiceImpl implements IGoodService {
 
     @Resource
     private GoodMapper goodMapper;
