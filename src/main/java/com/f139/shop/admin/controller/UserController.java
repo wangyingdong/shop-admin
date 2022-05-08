@@ -1,11 +1,13 @@
 package com.f139.shop.admin.controller;
 
+import com.f139.shop.admin.common.exception.BusinessException;
+import com.f139.shop.admin.common.exception.Errors;
 import com.f139.shop.admin.entity.UserInfo;
-import com.f139.shop.admin.service.IRightService;
+import com.f139.shop.admin.security.util.JwtUtil;
 import com.f139.shop.admin.service.IUserService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import org.apache.commons.codec.digest.DigestUtils;
+import io.jsonwebtoken.lang.Maps;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -20,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotNull;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,12 +36,26 @@ public class UserController {
     @Resource
     private IUserService userService;
 
-
-
     @PostMapping(value = "login")
-    public String login(@RequestBody @Validated(UserInfo.Login.class) UserInfo userInfo) {
-        Long id = userService.getUser(userInfo).getId();
-        return DigestUtils.md5Hex(id.toString()).toString();
+    public Map<String, String> login(@RequestBody @Validated(UserInfo.Login.class) UserInfo userInfo) {
+        return userService.loginUser(userInfo);
+    }
+
+    @PostMapping(value = "/token/refresh")
+    public Map<String, String> tokenRefresh(@RequestHeader(name = "token") String token, @RequestParam String refreshToken) {
+        if (JwtUtil.validateRefreshToken(refreshToken) && JwtUtil.validateAccessTokenWithoutExpiration(token)) {
+            HashMap<String, String> map = new HashMap<>();
+            map.put("accessToken", JwtUtil.createAccessTokenWithoutRefreshToken(refreshToken));
+            map.put("refreshToken", refreshToken);
+            return map;
+        } else {
+            throw new BusinessException(Errors.TOKEN_ERROR);
+        }
+    }
+
+    @GetMapping(value = "logout")
+    public void logout() {
+        userService.logout();
     }
 
     @GetMapping(value = "{id}")
@@ -49,7 +66,7 @@ public class UserController {
 
     @GetMapping
     public PageInfo<UserInfo> users(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum, @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize,
-                                    @RequestParam(value = "query",defaultValue = "") String query) {
+                                    @RequestParam(value = "query", defaultValue = "") String query) {
         return userService.getUsers(PageHelper.startPage(pageNum, pageSize), UserInfo.builder().username(query).build());
     }
 
@@ -87,6 +104,6 @@ public class UserController {
     public Boolean updateRole(@PathVariable Long id, @RequestBody Map<String, List<Integer>> map) {
         List<Integer> list = map.get("roleRoleIds");
         Integer[] array = list.stream().toArray(Integer[]::new);
-        return userService.updateRole(id,array);
+        return userService.updateRole(id, array);
     }
 }

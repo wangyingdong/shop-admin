@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class RightService implements IRightService {
+public class RightServiceImpl implements IRightService {
 
 
     @Resource

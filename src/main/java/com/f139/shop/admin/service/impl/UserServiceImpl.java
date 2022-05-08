@@ -2,6 +2,7 @@ package com.f139.shop.admin.service.impl;
 
 import com.f139.shop.admin.common.exception.BusinessException;
 import com.f139.shop.admin.common.exception.Errors;
+import com.f139.shop.admin.common.redis.RedisClientUtil;
 import com.f139.shop.admin.entity.UserInfo;
 import com.f139.shop.admin.entity.UserRole;
 import com.f139.shop.admin.entity.ViewUserRole;
@@ -9,9 +10,15 @@ import com.f139.shop.admin.mapper.RoleMapper;
 import com.f139.shop.admin.mapper.UserInfoMapper;
 import com.f139.shop.admin.mapper.UserRoleMapper;
 import com.f139.shop.admin.mapper.ViewUserRoleMapper;
+import com.f139.shop.admin.security.pojo.LoginUser;
+import com.f139.shop.admin.security.util.JwtUtil;
 import com.f139.shop.admin.service.IUserService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageInfo;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -19,6 +26,7 @@ import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,7 +34,7 @@ import java.util.stream.Collectors;
 
 
 @Service
-public class UserService implements IUserService {
+public class UserServiceImpl implements IUserService {
 
     @Resource
     private UserInfoMapper userInfoMapper;
@@ -39,6 +47,59 @@ public class UserService implements IUserService {
 
     @Resource
     private ViewUserRoleMapper viewUserRoleMapper;
+
+    @Resource
+    private PasswordEncoder passwordEncoder;
+
+    @Resource
+    private AuthenticationManager authenticationManager;
+
+    @Resource
+    private RedisClientUtil redisClientUtil ;
+
+    @Override
+    public Map<String, String> loginUser(UserInfo userInfo) {
+        Example example = new Example(UserInfo.class);
+        example.createCriteria().andEqualTo("username", userInfo.getUsername());
+        UserInfo user = userInfoMapper.selectOneByExample(example);
+        if (Objects.isNull(user)) {
+            throw new BusinessException(Errors.LOGIN_USERNAME_ERROR);
+        }
+        if (!user.getPassword().equals(userInfo.getPassword())) {
+            throw new BusinessException(Errors.LOGIN_PASSWORD_ERROR);
+        }
+        // 角色集合
+        List<String> permissions = new ArrayList<>();
+
+        List<ViewUserRole> userRoles = viewUserRoleMapper.select(ViewUserRole.builder().userId(user.getId()).build());
+        // 角色必须以`ROLE_`开头，数据库中没有，则在这里加
+        for (ViewUserRole role : userRoles) {
+            permissions.add(("ROLE_" + role.getRoleName()));
+        }
+        LoginUser loginUser = new LoginUser(
+                UserInfo.builder().id(user.getId()).username(user.getUsername()).password(passwordEncoder.encode(user.getPassword())).userRoleList(userRoles).build(),
+                permissions
+        );
+
+        String username = loginUser.getUserInfo().getUsername().toString();
+        String accessToken = JwtUtil.createAccessToken(loginUser);
+        String refreshToken = JwtUtil.createRefreshToken(loginUser);
+        //存入缓存
+        redisClientUtil.setVal("login:" + username, loginUser);
+        //把token响应给前端
+        HashMap<String, String> map = new HashMap<>();
+        map.put("accessToken", accessToken);
+        map.put("refreshToken", refreshToken);
+        return map;
+    }
+
+    @Override
+    public void logout() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+        String username = loginUser.getUserInfo().getUsername();
+        redisClientUtil.del("login:" + username);
+    }
 
     @Override
     public Boolean saveUser(UserInfo userInfo) {
@@ -58,6 +119,7 @@ public class UserService implements IUserService {
         return userInfoMapper.delete(UserInfo.builder().id(id).build()) > 0 ? true : false;
     }
 
+
     @Override
     public UserInfo getUser(UserInfo userInfo) {
         Example example = new Example(UserInfo.class);
@@ -66,8 +128,9 @@ public class UserService implements IUserService {
         if (Objects.isNull(user)) {
             throw new BusinessException(Errors.NO_OBJECT_FOUND_ERROR);
         }
-        return user;
+        return userInfo;
     }
+
 
     @Override
     public UserInfo getUser(Long id) {
