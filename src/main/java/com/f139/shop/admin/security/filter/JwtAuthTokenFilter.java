@@ -28,26 +28,28 @@ public class JwtAuthTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        //获取token
-        String token = request.getHeader("token");
-        if (!StringUtils.hasText(token)) {
-            filterChain.doFilter(request, response);
-            return;
+        if (checkJwtToken(request)) {
+            String token = request.getHeader(JwtUtil.AUTH_HEADER_KEY).replace(JwtUtil.TOKEN_PREFIX, "");
+            //解析token
+            String username = JwtUtil.getTokenSubject(token);
+            //从redis中获取用户信息
+            LoginUser loginUser = (LoginUser) redisClientUtil.getVal("login:" + username);
+            if (Objects.isNull(loginUser)) {
+                throw new BusinessException(Errors.LOGIN_USER_NOT_LOGIN_ERROR);
+            }
+            //存入SecurityContextHolder
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
-        //解析token
-        String username = JwtUtil.getTokenSubject(token);
-
-        //从redis中获取用户信息
-        LoginUser loginUser = (LoginUser) redisClientUtil.getVal("login:" + username);
-        if (Objects.isNull(loginUser)) {
-            throw new BusinessException(Errors.LOGIN_USER_NOT_LOGIN_ERROR);
-        }
-        //存入SecurityContextHolder
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
         //放行
         filterChain.doFilter(request, response);
     }
+
+    private boolean checkJwtToken(HttpServletRequest request) {
+        String token = request.getHeader(JwtUtil.AUTH_HEADER_KEY);
+        return token != null && token.startsWith(JwtUtil.TOKEN_PREFIX);
+    }
+
+
 }

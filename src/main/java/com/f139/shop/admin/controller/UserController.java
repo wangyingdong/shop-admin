@@ -42,11 +42,11 @@ public class UserController {
     }
 
     @PostMapping(value = "/token/refresh")
-    public Map<String, String> tokenRefresh(@RequestHeader(name = "token") String token, @RequestParam String refreshToken) {
-        if (JwtUtil.validateRefreshToken(refreshToken) && JwtUtil.validateAccessTokenWithoutExpiration(token)) {
+    public Map<String, String> tokenRefresh(@RequestParam String accessToken,@RequestParam String refreshToken) {
+        if (JwtUtil.validateAccessToken(accessToken) && JwtUtil.validateRefreshToken(refreshToken)) {
             HashMap<String, String> map = new HashMap<>();
-            map.put("accessToken", JwtUtil.createAccessTokenWithoutRefreshToken(refreshToken));
-            map.put("refreshToken", refreshToken);
+            map.put("accessToken", JwtUtil.createAccessTokenWithoutAccessToken(accessToken));
+            map.put("refreshToken", JwtUtil.createRefreshTokenWithoutRefreshToken(refreshToken));
             return map;
         } else {
             throw new BusinessException(Errors.TOKEN_ERROR);

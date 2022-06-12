@@ -6,12 +6,14 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import lombok.val;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,10 +25,31 @@ public class JwtUtil {
 
     //有效期为
     public static final Long TTL = 60 * 60 * 1000L;// 60 * 60 *1000  一个小时
+
+    public static final String TOKEN_PREFIX = "Bearer ";
+
+    public static final String AUTH_HEADER_KEY = "Authorization";
+
+    private static final String TOKEN_ACCESS_KEY = "accesskeysufdadsfshuzhitingniasdfangcereshuzhitingnizhenbangasdfasfsafd";
+
+    private static final String TOKEN_REFRESH_KEY = "refreshkeyafdadsfshuzhitingnizasdfnbangcereshuzhsgnizhenbangasdfasfsafd";
+
+
     //设置签名访问令牌的秘钥
-    public static final Key ACCESS_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private static SecretKey getAccessKey(){
+        return getSecretKey(TOKEN_ACCESS_KEY);
+    }
+
     //设置刷新令牌的秘钥
-    public static final Key REFRESH_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private static SecretKey getRefreshKey(){
+       return getSecretKey(TOKEN_REFRESH_KEY);
+    }
+
+    private static SecretKey getSecretKey(String key){
+        byte[] keySecretBytes = Base64.getDecoder().decode(key);
+        SecretKey signingKey = new SecretKeySpec(keySecretBytes, SignatureAlgorithm.HS256.getJcaName());
+        return signingKey;
+    }
 
     public static String getUUID() {
         String token = UUID.randomUUID().toString().replaceAll("-", "");
@@ -35,15 +58,15 @@ public class JwtUtil {
 
 
     public static Boolean validateAccessToken(String token) {
-        return validateToken(token, ACCESS_KEY, true);
+        return validateToken(token, getAccessKey(), true);
     }
 
     public static Boolean validateAccessTokenWithoutExpiration(String token) {
-        return validateToken(token, ACCESS_KEY, false);
+        return validateToken(token, getAccessKey(), false);
     }
 
     public static Boolean validateRefreshToken(String token) {
-        return validateToken(token, REFRESH_KEY, true);
+        return validateToken(token, getRefreshKey(), true);
     }
 
 
@@ -61,31 +84,49 @@ public class JwtUtil {
 
 
     public static String createAccessToken(UserDetails userDetails) {
-        return createJwtToken(userDetails, ACCESS_KEY);
+        return createJwtToken(userDetails, getAccessKey());
+    }
+
+    public static String createAccessToken(UserDetails userDetails,Key key) {
+        return createJwtToken(userDetails, key);
     }
 
     public static String createRefreshToken(UserDetails userDetails) {
-        return createJwtToken(userDetails, REFRESH_KEY);
+        return createJwtToken(userDetails, getRefreshKey());
     }
 
-    public static String createAccessTokenWithoutRefreshToken(String token) {
-        return (parseClaims(token, REFRESH_KEY))
+    public static String createAccessTokenWithoutAccessToken(String token) {
+        return (parseClaims(token, getAccessKey()))
                 .map(claims ->
                         Jwts.builder()
                                 .setClaims(claims)
                                 .setExpiration(new Date(System.currentTimeMillis() + TTL))
                                 .setIssuedAt(new Date())
-                                .signWith(ACCESS_KEY, SignatureAlgorithm.HS512)
+                                .signWith(getAccessKey(), SignatureAlgorithm.HS256)
                                 .compact()
                 )
                 .orElseThrow(() ->
                         new BusinessException(Errors.TOKEN_ERROR));
 
+    }
+
+    public static String createRefreshTokenWithoutRefreshToken(String token) {
+        return (parseClaims(token, getRefreshKey()))
+                .map(claims ->
+                        Jwts.builder()
+                                .setClaims(claims)
+                                .setExpiration(new Date(System.currentTimeMillis() + TTL))
+                                .setIssuedAt(new Date())
+                                .signWith(getRefreshKey(), SignatureAlgorithm.HS256)
+                                .compact()
+                )
+                .orElseThrow(() ->
+                        new BusinessException(Errors.TOKEN_ERROR));
 
     }
 
     public static String getTokenSubject(String token) {
-        return (parseClaims(token,ACCESS_KEY)
+        return (parseClaims(token, getAccessKey())
                     .map(claims -> claims.getSubject())
                 )
                 .orElseThrow( () ->
@@ -101,7 +142,7 @@ public class JwtUtil {
                 .setSubject(userDetails.getUsername())   // 主题  可以是JSON数据
                 .claim("authorities", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(toList()))
                 .setIssuedAt(new Date(now))      // 签发时间
-                .signWith(key, SignatureAlgorithm.HS512)
+                .signWith(key, SignatureAlgorithm.HS256)
                 .setExpiration(new Date(now + JwtUtil.TTL))
                 .compact();
     }
