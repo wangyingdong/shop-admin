@@ -147,6 +147,9 @@ public class JwtUtil {
                 .compact();
     }
 
+    public static Optional<Claims> parseAccessToken(String token) {
+        return parseClaims(token,getAccessKey());
+    }
 
     /**
      * 解析
