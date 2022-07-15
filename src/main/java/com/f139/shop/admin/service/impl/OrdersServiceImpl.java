@@ -27,7 +27,7 @@ public class OrdersServiceImpl implements IOrdersService {
     @Override
     public PageInfo<Orders> getOrdersList(Page<Orders> startPage, Orders order) {
         Example example = new Example(Orders.class);
-        if(Objects.isNull(order)){
+        if(!Objects.isNull(order)){
             example.createCriteria().andLike("name","%"+order.getName()+"%");
         }
         List<Orders> list = orderMapper.selectByExample(example);

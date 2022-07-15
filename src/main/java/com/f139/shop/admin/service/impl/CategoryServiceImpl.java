@@ -1,6 +1,5 @@
 package com.f139.shop.admin.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.f139.shop.admin.common.exception.BusinessException;
 import com.f139.shop.admin.common.exception.Errors;
 import com.f139.shop.admin.entity.Attribute;
@@ -38,27 +37,27 @@ public class CategoryServiceImpl implements ICategoryService {
 
 
     @Override
-    @Cacheable(value = "getCategoryList",key="#page.pageNum-#page.pageSize")
-    public  PageInfo getCategoryList(Page page) {
+    @Cacheable(value = "getCategories", key = "#page.pageNum-#page.pageSize")
+    public PageInfo getCategories(Page page) {
         Example example = new Example(Category.class);
-        example.createCriteria().andEqualTo("parentId",0);
+        example.createCriteria().andEqualTo("parentId", 0);
         List<Category> categoryList = categoryMapper.selectByExample(example);
-        categoryList = getCategoryChildrenList(categoryList,1);
+        categoryList = getCategoryChildrenList(categoryList, 1);
         PageInfo<Category> pageInfo = new PageInfo<Category>(categoryList);
         return pageInfo;
     }
 
     @Override
     public Boolean saveCategory(Category category) {
-        return categoryMapper.insert(category) > 0 ;
+        return categoryMapper.insert(category) > 0;
     }
 
     @Override
-    @Cacheable(value = "getAttributeList")
-    public List<Attribute> getAttributeList(Attribute attribute){
+    @Cacheable(value = "getAttributes")
+    public List<Attribute> getAttributes(Attribute attribute) {
         List<Attribute> attributeList = attributeMapper.select(attribute);
         List attributeId = attributeList.stream().map(a -> a.getId()).collect(Collectors.toList());
-        if(!CollectionUtils.isEmpty(attributeId)){
+        if (!CollectionUtils.isEmpty(attributeId)) {
             Example example = new Example(AttributeValue.class);
             Example.Criteria ca = example.createCriteria();
             ca.andIn("attributeId", attributeId);
@@ -66,9 +65,9 @@ public class CategoryServiceImpl implements ICategoryService {
 
             Map<Integer, List<AttributeValue>> map = valueList.stream().collect(Collectors.groupingBy(attributeValue -> attributeValue.getAttributeId()));
 
-            attributeList.stream().map( a -> {
+            attributeList.stream().map(a -> {
                 a.setAttributeValue(map.get(a.getId()));
-                return  a;
+                return a;
             }).collect(Collectors.toList());
         }
         return attributeList;
@@ -87,7 +86,7 @@ public class CategoryServiceImpl implements ICategoryService {
     @Override
     @Transactional
     public Boolean deleteAttribute(Attribute attribute) {
-        if( attributeMapper.delete(attribute) > 0){
+        if (attributeMapper.delete(attribute) > 0) {
             Example example = new Example(AttributeValue.class);
             Example.Criteria ca = example.createCriteria();
             ca.andEqualTo("attributeId", attribute.getId());
@@ -110,13 +109,13 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
 
-    private List<Category> getCategoryChildrenList(List<Category> categoryChildrenList,Integer level){
-        if(!CollectionUtils.isEmpty(categoryChildrenList)) {
-            List<Integer> categoryChildrenId = categoryChildrenList.stream().map( category -> category.getId()).collect(Collectors.toList());
-            Map<Integer,List<Category>> categoryChildren = this.getCategoryChildrenGroupingByParentId(categoryChildrenId,level+1);
+    private List<Category> getCategoryChildrenList(List<Category> categoryChildrenList, Integer level) {
+        if (!CollectionUtils.isEmpty(categoryChildrenList)) {
+            List<Integer> categoryChildrenId = categoryChildrenList.stream().map(category -> category.getId()).collect(Collectors.toList());
+            Map<Integer, List<Category>> categoryChildren = this.getCategoryChildrenGroupingByParentId(categoryChildrenId, level + 1);
             categoryChildrenList.stream().map(
                     category -> {
-                        category.setChildren(categoryChildren.get( category.getId() ));
+                        category.setChildren(categoryChildren.get(category.getId()));
                         return category;
                     }
             ).collect(Collectors.toList());
@@ -125,11 +124,11 @@ public class CategoryServiceImpl implements ICategoryService {
         return categoryChildrenList;
     }
 
-    private Map<Integer,List<Category>> getCategoryChildrenGroupingByParentId(List<Integer> parentId, Integer level) {
+    private Map<Integer, List<Category>> getCategoryChildrenGroupingByParentId(List<Integer> parentId, Integer level) {
         Example example = new Example(Category.class);
-        example.createCriteria().andIn("parentId",parentId).andEqualTo("level",level);
+        example.createCriteria().andIn("parentId", parentId).andEqualTo("level", level);
         List<Category> categoryChildrenList = categoryMapper.selectByExample(example);
-        categoryChildrenList = getCategoryChildrenList(categoryChildrenList,level);
-        return categoryChildrenList.stream().collect(Collectors.groupingBy(Category::getParentId ));
+        categoryChildrenList = getCategoryChildrenList(categoryChildrenList, level);
+        return categoryChildrenList.stream().collect(Collectors.groupingBy(Category::getParentId));
     }
 }

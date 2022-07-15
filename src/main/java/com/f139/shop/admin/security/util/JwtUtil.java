@@ -69,6 +69,9 @@ public class JwtUtil {
         return validateToken(token, getRefreshKey(), true);
     }
 
+    public static Boolean validateAccessTokenToken(String token) {
+        return validateToken(token, getAccessKey(), true);
+    }
 
     private static Boolean validateToken(String token, Key key, Boolean isExpiredInvalid) {
         try {

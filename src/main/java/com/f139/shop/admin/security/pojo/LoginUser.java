@@ -5,14 +5,12 @@ import com.f139.shop.admin.entity.UserInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -39,10 +37,11 @@ public class LoginUser implements UserDetails {
             return authorities;
         }
         //把permissions中字符串类型的权限信息转换成GrantedAuthority对象存入authorities中
-        authorities = permissions.stream().
-                map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-        return authorities;
+//        authorities = permissions.stream().
+//                map(SimpleGrantedAuthority::new)
+//                .collect(Collectors.toList());
+//        return authorities;
+        return AuthorityUtils.commaSeparatedStringToAuthorityList(String.join(",", permissions));
     }
 
     @Override
@@ -55,24 +54,28 @@ public class LoginUser implements UserDetails {
         return userInfo.getUsername();
     }
 
+    //账号是否沒过期
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
+    //账号是否沒锁定
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
+    //密码是否沒过期
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
+    //账号是否可用
     @Override
     public boolean isEnabled() {
-        return true;
+        return userInfo.getState();
     }
 
 }

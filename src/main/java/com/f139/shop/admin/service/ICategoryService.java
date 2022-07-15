@@ -10,11 +10,11 @@ import java.util.List;
 
 public interface ICategoryService {
 
-    PageInfo<Category> getCategoryList(Page page);
+    PageInfo<Category> getCategories(Page page);
 
     Boolean saveCategory(Category category);
 
-    List<Attribute> getAttributeList(Attribute attribute);
+    List<Attribute> getAttributes(Attribute attribute);
 
     Boolean saveAttribute(Attribute attribute);
 

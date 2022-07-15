@@ -38,7 +38,7 @@ public class OrdersController {
         return orderService.getOrdersLogistic(orderId);
     }
 
-    @GetMapping(value = "/report")
+    @GetMapping(value = "/reports")
     public List<OrdersProduct> getOrdersReport(){
         return orderService.getOrdersProduct();
     }

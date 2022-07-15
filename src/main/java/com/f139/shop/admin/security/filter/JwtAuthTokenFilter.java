@@ -30,6 +30,10 @@ public class JwtAuthTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         if (checkJwtToken(request)) {
             String token = request.getHeader(JwtUtil.AUTH_HEADER_KEY).replace(JwtUtil.TOKEN_PREFIX, "");
+            Boolean isExpired = JwtUtil.validateAccessTokenToken(token);
+            if(!isExpired){
+                throw new BusinessException(Errors.TOKEN_EXPIRED_ERROR);
+            }
             //解析token
             String username = JwtUtil.getTokenSubject(token);
             //从redis中获取用户信息

@@ -14,12 +14,14 @@ public enum Errors {
     LOGIN_USERNAME_ERROR(20001, "用户名错误"),
     LOGIN_PASSWORD_ERROR(20002, "用户密码错误"),
     LOGIN_USER_NOT_LOGIN_ERROR(20003, "用户没有登录"),
+    LOGIN_USER_STATE_ERROR(20004, "用户没有启用"),
 
 
     UPLOAD_FILE_NAME_ERROR(30000, "文件格式错误"),
     UPLOAD_FILE_EMPTY_ERROR(30001, "文件內容错误"),
 
-    TOKEN_ERROR(40000, "TOKEN错误");
+    TOKEN_ERROR(40000, "TOKEN错误"),
+    TOKEN_EXPIRED_ERROR(40001, "TOKEN已过期");
 
 
     public final Integer code;

@@ -26,18 +26,16 @@ import java.util.List;
 
 @RestController
 @ResponseBody
-@RequestMapping("/category")
+@RequestMapping("/categories")
 public class CategoryController {
-
-
 
     @Resource
     private ICategoryService categoryService;
 
 
     @GetMapping
-    public PageInfo<Category> getCategoryList(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum, @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize) {
-        return categoryService.getCategoryList(PageHelper.startPage(pageNum, pageSize));
+    public PageInfo<Category> getCategories(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum, @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize) {
+        return categoryService.getCategories(PageHelper.startPage(pageNum, pageSize));
     }
 
     @PostMapping
@@ -46,10 +44,10 @@ public class CategoryController {
     }
 
 
-    @GetMapping(value = "/attribute/{id}")
-    public List<Attribute> getAttributeList(@PathVariable(value = "id") Integer id, @RequestParam(value = "type") String type){
+    @GetMapping(value = "/attribute/{id}/type/{type}")
+    public List<Attribute> getAttributes(@PathVariable(value = "id") Integer id, @PathVariable(value = "type") String type){
         Attribute attribute = Attribute.builder().categoryId(id).type(type).build();
-        return categoryService.getAttributeList(attribute);
+        return categoryService.getAttributes(attribute);
     }
 
     @PostMapping(value = "/attribute")

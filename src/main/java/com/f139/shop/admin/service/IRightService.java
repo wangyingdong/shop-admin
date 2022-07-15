@@ -10,7 +10,7 @@ public interface IRightService {
 
     List<Module> getModules(Integer parentId);
 
-    List<Module> getModulesList();
+    List<Module> getModules();
 
     List<Role> getRoles();
 
@@ -21,4 +21,6 @@ public interface IRightService {
     Boolean deleteRoleModule(Integer roleId, Integer moduleId);
 
     Boolean saveRoleModule(Integer roleId, Integer[] moduleIds);
+
+    List<ViewRoleModule> getModulesByUserId(Long userId);
 }

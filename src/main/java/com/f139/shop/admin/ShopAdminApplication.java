@@ -7,6 +7,7 @@ import tk.mybatis.spring.annotation.MapperScan;
 
 @SpringBootApplication
 @MapperScan("com.f139.shop.admin.mapper")
+@EnableCaching
 public class ShopAdminApplication {
 
 	public static void main(String[] args) {

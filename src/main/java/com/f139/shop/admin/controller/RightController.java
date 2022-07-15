@@ -4,6 +4,7 @@ import com.f139.shop.admin.entity.Module;
 import com.f139.shop.admin.entity.Role;
 import com.f139.shop.admin.entity.ViewRoleModule;
 import com.f139.shop.admin.service.IRightService;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -24,9 +25,14 @@ public class RightController {
         return rightService.getModules(0);
     }
 
-    @GetMapping(value = "list")
-    public List<Module> list() {
-        return rightService.getModulesList();
+    @GetMapping(value = "authorities")
+    public List<Module> authorities() {
+        return rightService.getModules();
+    }
+
+    @GetMapping(value = "/modules/{userId}")
+    public List<ViewRoleModule> modulesByUserName(@PathVariable(value = "userId")Long userId) {
+        return rightService.getModulesByUserId(userId);
     }
 
     @GetMapping(value = "roles")
@@ -52,7 +58,10 @@ public class RightController {
     @PostMapping(value = "/roleModule/{roleId}")
     public Boolean saveRoleModule(@PathVariable Integer roleId,@RequestBody Map<String, Object> map){
         String moduleIds = (String) map.get("moduleIds");
-        Integer[] array = Arrays.stream(moduleIds.split(",")).map(s -> Integer.parseInt(s)).toArray(Integer[]::new);
+        Integer[] array = null;
+        if(StringUtils.hasText(moduleIds)){
+            array = Arrays.stream(moduleIds.split(",")).map(s -> Integer.parseInt(s)).toArray(Integer[]::new);
+        }
         return rightService.saveRoleModule(roleId,array);
     }
 }

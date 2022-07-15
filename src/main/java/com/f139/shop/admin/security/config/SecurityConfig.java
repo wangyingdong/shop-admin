@@ -12,13 +12,18 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
 
 @EnableWebSecurity
 @Configuration
@@ -26,13 +31,17 @@ import javax.annotation.Resource;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     /**
-     * 指定加密方式
+     * spring security的默认filter链:
+     * SecurityContextPersistenceFilter
+     *  ->HeaderWriterFilter
+     *  ->LogoutFilter
+     *  ->UsernamePasswordAuthenticationFilter
+     *  ->RequestCacheAwareFilter
+     *  ->SecurityContextHolderAwareRequestFilter
+     *  ->SessionManagementFilter
+     *  ->ExceptionTranslationFilter
+     *  ->FilterSecurityInterceptor
      */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        // 使用BCrypt加密密码
-        return new BCryptPasswordEncoder();
-    }
 
     @Resource
     private JwtAuthTokenFilter jwtAuthTokenFilter;
@@ -43,18 +52,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Resource
     private AccessDeniedHandler accessDeniedHandler;
 
+    @Resource
+    private UserDetailsService userDetailsService;
+
+    @Resource
+    private  PasswordEncoder passwordEncoder;
+
     @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
 
+    // 从数据库读取的用户进行身份认证
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth
-                // 从数据库读取的用户进行身份认证
-                .userDetailsService(userDetailsService())
-                .passwordEncoder(passwordEncoder());
+        auth.userDetailsService(userDetailsService)
+                .passwordEncoder(passwordEncoder);
     }
 
 
@@ -74,19 +88,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
              .authorizeRequests(  authorizeRequests -> authorizeRequests
                      .antMatchers(HttpMethod.OPTIONS).permitAll()
                      .mvcMatchers("/","/users/login").permitAll()
-                .anyRequest().authenticated()
+                     .anyRequest().access("@authenticationPermissionService.hasPermission(request,authentication)")
+                     //.anyRequest().authenticated()
             )
             //将TOKEN校验过滤器配置到过滤器链中，否则不生效，放到UsernamePasswordAuthenticationFilter之前
             .addFilterBefore(jwtAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
             ;
     }
 
-//
+
 //    @Bean
 //    CorsConfigurationSource corsConfigurationSource() {
 //        CorsConfiguration configuration = new CorsConfiguration();
 //        // 允许跨域访问的主机
-//        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:8080"));
+//        configuration.setAllowedOrigins(Collections.singletonList("http://127.0.0.1:8081"));
 //        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 //        configuration.setAllowedHeaders(Collections.singletonList("*"));
 //        configuration.addExposedHeader("X-Authenticate");

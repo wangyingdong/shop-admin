@@ -13,5 +13,7 @@
     <result column="level" jdbcType="INTEGER" property="level" />
     <result column="role_id" jdbcType="INTEGER" property="roleId" />
     <result column="module_id" jdbcType="INTEGER" property="moduleId" />
+    <result column="method" jdbcType="VARCHAR" property="method" />
+
   </resultMap>
 </mapper>

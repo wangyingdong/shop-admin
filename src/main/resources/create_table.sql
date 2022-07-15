@@ -146,3 +146,10 @@ create table if not exists user_role
     unique (user_id, role_id)
     );
 
+
+create  view if not view_role_module(
+    select c.id, c.name, c.method, c.path, c.sort, c.parent_id, c.level,b.module_id,b.role_id from role a inner join role_module b on a.id = b.role_id inner join module c on b.module_id = c.id
+)
+
+
+

@@ -38,5 +38,8 @@ public class ViewRoleModule {
     @Column(name = "module_id")
     private Integer moduleId;
 
+    @Column(name = "method")
+    private String method;
+
     private List<ViewRoleModule> children;
 }
