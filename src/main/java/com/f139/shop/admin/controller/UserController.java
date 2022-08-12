@@ -1,5 +1,6 @@
 package com.f139.shop.admin.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.f139.shop.admin.common.exception.BusinessException;
 import com.f139.shop.admin.common.exception.Errors;
 import com.f139.shop.admin.entity.UserInfo;
@@ -38,7 +39,8 @@ public class UserController {
 
     @PostMapping(value = "login")
     public Map<String, String> login(@RequestBody @Validated(UserInfo.Login.class) UserInfo userInfo) {
-        return userService.loginUser(userInfo);
+        Map<String,String> map =  userService.loginUser(userInfo);
+        return map;
     }
 
     @PostMapping(value = "/token/refresh")
